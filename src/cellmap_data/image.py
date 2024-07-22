@@ -77,7 +77,7 @@ class CellMapImage:
         self._last_coords = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    def __getitem__(self, center: Mapping[str, float]) -> torch.Tensor:
+    async def __getitem__(self, center: Mapping[str, float]) -> torch.Tensor:
         """Returns image data centered around the given point, based on the scale and shape of the target output image."""
         # Find vectors of coordinates in world space to pull data from
         coords = {}

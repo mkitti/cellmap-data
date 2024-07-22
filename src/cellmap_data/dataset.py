@@ -242,8 +242,7 @@ class CellMapDataset(Dataset):
         self._current_idx = idx
         self._current_center = center
         spatial_transforms = self.generate_spatial_transforms()
-        # TODO: Need to establish deformation field at dataset level, then propagate...
-        # should probably do as many coordinate transformations as possible at the dataset level (duplicate reference frame images should have the same coordinate transformations) --> do this per array
+        # TODO: should probably do as many coordinate transformations as possible at the dataset level (duplicate reference frame images should have the same coordinate transformations) --> do this per array
         outputs = {}
         for array_name in self.input_arrays.keys():
             self.input_sources[array_name].set_spatial_transforms(spatial_transforms)
