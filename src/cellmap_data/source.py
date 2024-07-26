@@ -14,7 +14,7 @@ import zarr
 from scipy.spatial.transform import Rotation as rot
 
 
-class CellMapImage:
+class CellMapSource:
     """
     A class for handling image data from a CellMap dataset.
 
@@ -452,7 +452,7 @@ class CellMapImage:
         return data
 
 
-class EmptyImage:
+class EmptySource:
     """
     A class for handling empty image data.
 

@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 import tensorstore
-from .image import CellMapImage, EmptyImage
+from .source import CellMapSource, EmptySource
 import logging
 
 logger = logging.getLogger(__name__)
@@ -167,7 +167,7 @@ class CellMapDataset(Dataset):
         self._current_spatial_transforms = None
         self.input_sources = {}
         for array_name, array_info in self.input_arrays.items():
-            self.input_sources[array_name] = CellMapImage(
+            self.input_sources[array_name] = CellMapSource(
                 self.raw_path,
                 "raw",
                 array_info["scale"],
@@ -306,7 +306,7 @@ class CellMapDataset(Dataset):
             for array_name, sources in self.target_sources.items():
                 class_counts[array_name] = {}
                 for label, source in sources.items():
-                    if not isinstance(source, CellMapImage):
+                    if not isinstance(source, CellMapSource):
                         class_counts[array_name][label] = 0.0
                         class_counts[array_name][label + "_bg"] = 0.0
                     else:
@@ -401,7 +401,7 @@ class CellMapDataset(Dataset):
             inferred_arrays = []
             for label in self.classes:
                 if isinstance(
-                    self.target_sources[array_name][label], (CellMapImage, EmptyImage)
+                    self.target_sources[array_name][label], (CellMapSource, EmptySource)
                 ):
                     self.target_sources[array_name][label].set_spatial_transforms(
                         spatial_transforms
@@ -451,17 +451,17 @@ class CellMapDataset(Dataset):
             )
         # Check to make sure we aren't trying to define true negatives with non-existent images
         for label in self.classes:
-            if isinstance(target_array[label], (CellMapImage, EmptyImage)):
+            if isinstance(target_array[label], (CellMapSource, EmptySource)):
                 continue
             is_empty = True
             for other_label in target_array[label]:
                 if other_label in target_array and isinstance(
-                    target_array[other_label], CellMapImage
+                    target_array[other_label], CellMapSource
                 ):
                     is_empty = False
                     break
             if is_empty:
-                target_array[label] = EmptyImage(
+                target_array[label] = EmptySource(
                     label, array_info["scale"], array_info["shape"], empty_store  # type: ignore
                 )
 
@@ -473,7 +473,7 @@ class CellMapDataset(Dataset):
         i: int,
         array_info: Mapping[str, Sequence[int | float]],
         empty_store: torch.Tensor,
-    ) -> CellMapImage | EmptyImage | Sequence[str]:
+    ) -> CellMapSource | EmptySource | Sequence[str]:
         """Returns a target array source for a specific class in the dataset."""
         if label in self.classes_with_path:
             if isinstance(self.target_value_transforms, dict):
@@ -482,7 +482,7 @@ class CellMapDataset(Dataset):
                 value_transform: Callable = self.target_value_transforms[i]
             else:
                 value_transform: Callable = self.target_value_transforms  # type: ignore
-            array = CellMapImage(
+            array = CellMapSource(
                 self.target_path_str.format(label=label),
                 label,
                 array_info["scale"],
@@ -503,7 +503,7 @@ class CellMapDataset(Dataset):
                 # Add lookup of source images for true-negatives in absence of annotations
                 array = self.class_relation_dict[label]
             else:
-                array = EmptyImage(
+                array = EmptySource(
                     label, array_info["scale"], array_info["shape"], empty_store
                 )
         return array
@@ -645,7 +645,7 @@ class CellMapDataset(Dataset):
         self.target_value_transforms = transforms
         for sources in self.target_sources.values():
             for source in sources.values():
-                if isinstance(source, CellMapImage):
+                if isinstance(source, CellMapSource):
                     source.value_transform = transforms
 
     def reset_arrays(self, type: str = "target") -> None:
@@ -653,7 +653,7 @@ class CellMapDataset(Dataset):
         if type.lower() == "input":
             self.input_sources = {}
             for array_name, array_info in self.input_arrays.items():
-                self.input_sources[array_name] = CellMapImage(
+                self.input_sources[array_name] = CellMapSource(
                     self.raw_path,
                     "raw",
                     array_info["scale"],
